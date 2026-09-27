@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport ERA — BANGE</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; color: #1c2421; }
+        h1 { color: #006b3f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #d9e2dc; padding: 8px; text-align: left; }
+        .meta { color: #5c6770; margin-bottom: 20px; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <p class="no-print"><button onclick="window.print()">Imprimer / Enregistrer en PDF</button></p>
+    <h1>BANGE Bank Cameroun — Rapport de rapprochement ERA</h1>
+    <p class="meta">Généré le {{ genere_le|date:"d/m/Y H:i" }}
+        {% if date_debut %} — du {{ date_debut }}{% endif %}
+        {% if date_fin %} au {{ date_fin }}{% endif %}
+    </p>
+    <table>
+        <tr><th>Indicateur</th><th>Valeur</th></tr>
+        <tr><td>Transactions</td><td>{{ stats.total_tx }}</td></tr>
+        <tr><td>Correspondances</td><td>{{ stats.correspondances }}</td></tr>
+        <tr><td>Anomalies</td><td>{{ stats.anomalies }}</td></tr>
+        <tr><td>Non rapprochées</td><td>{{ stats.non_rapprochees }}</td></tr>
+    </table>
+    <h2>Par partenaire</h2>
+    <table>
+        <tr><th>Partenaire</th><th>Nombre</th></tr>
+        {% for ligne in stats.par_partenaire %}
+        <tr><td>{{ ligne.source__nom }}</td><td>{{ ligne.total }}</td></tr>
+        {% endfor %}
+    </table>
+    <h2>Par type d'opération</h2>
+    <table>
+        <tr><th>Type</th><th>Nombre</th></tr>
+        {% for ligne in stats.par_type %}
+        <tr><td>{{ ligne.type_operation }}</td><td>{{ ligne.total }}</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

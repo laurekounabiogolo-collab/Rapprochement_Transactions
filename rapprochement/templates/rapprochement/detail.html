@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Rapprochement {{ r.id }}{% endblock %}
+{% block heading %}Rapprochement #{{ r.id }}{% endblock %}
+{% block back_url %}{% url 'liste_rapprochements' %}{% endblock %}
+{% block content %}
+<div class="cards">
+    <div class="card"><h3>Correspondances</h3><div class="nombre">{{ r.nombre_correspondances }}</div></div>
+    <div class="card"><h3>Anomalies</h3><div class="nombre">{{ r.nombre_anomalies }}</div></div>
+    <div class="card"><h3>Non rapprochées</h3><div class="nombre">{{ r.nombre_non_rapprochees }}</div></div>
+    <div class="card"><h3>Transactions</h3><div class="nombre">{{ r.nombre_transactions }}</div></div>
+</div>
+<div class="panel">
+    <p><strong>Partenaire :</strong> {{ r.partenaire.nom }}</p>
+    <p><strong>Type :</strong> {{ r.get_type_operation_display }}</p>
+    <p><strong>Statut :</strong> {{ r.get_statut_display }}</p>
+    <p><strong>Validation :</strong>
+        {% if r.valide %}
+            Validé par {{ r.valide_par|default:"—" }} le {{ r.date_validation|date:"d/m/Y H:i" }}
+        {% else %}
+            En attente de validation du responsable ERA
+        {% endif %}
+    </p>
+    <p><strong>Lancé par :</strong> {{ r.lance_par.username }} le {{ r.date_lancement|date:"d/m/Y H:i" }}</p>
+    {% if r.message %}<p>{{ r.message }}</p>{% endif %}
+    <div class="actions">
+        <a class="btn" href="{% url 'correspondances' %}?partenaire={{ r.partenaire_id }}">Correspondances</a>
+        <a class="btn secondary" href="{% url 'anomalies' %}?partenaire={{ r.partenaire_id }}">Anomalies</a>
+        <a class="btn light" href="{% url 'non_rapprochees' %}?partenaire={{ r.partenaire_id }}">Non rapprochées</a>
+        {% if peut_valider and not r.valide %}
+        <form method="post" action="{% url 'valider_rapprochement' r.pk %}">
+            {% csrf_token %}
+            <button class="btn" type="submit"><i class="bi bi-patch-check"></i> Valider le résultat</button>
+        </form>
+        {% endif %}
+    </div>
+    {% if peut_valider and not r.valide and anomalies_ouvertes %}
+    <p class="muted" style="margin-top:12px;">
+        {{ anomalies_ouvertes }} anomalie(s) restent à traiter avant de pouvoir valider ce rapprochement.
+    </p>
+    {% endif %}
+</div>
+{% endblock %}

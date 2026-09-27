@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Anomalie {{ a.id }}{% endblock %}
+{% block heading %}Anomalie #{{ a.id }}{% endblock %}
+{% block back_url %}{% url 'anomalies' %}{% endblock %}
+{% block content %}
+<div class="panel">
+    <p><strong>Référence :</strong> {{ a.transaction.reference }}</p>
+    <p><strong>Partenaire :</strong> {{ a.transaction.source.nom }}</p>
+    <p><strong>Type d'opération :</strong> {{ a.transaction.get_type_operation_display }}</p>
+    <p><strong>Montant :</strong> {{ a.transaction.montant }} {{ a.transaction.devise }}</p>
+    <p><strong>MTTC importé :</strong> {{ a.transaction.mttc }}</p>
+    <p><strong>MTTC recalculé :</strong> {{ a.transaction.mttc_recalculee|default:"—" }}</p>
+    <p><strong>Type d'anomalie :</strong> {{ a.get_type_anomalie_display }}</p>
+    <p><strong>Description :</strong> {{ a.description }}</p>
+    <p><strong>Statut :</strong> {{ a.get_statut_display }}</p>
+    <p><strong>Date :</strong> {{ a.date_creation|date:"d/m/Y H:i" }}</p>
+    <p><strong>Résolue par :</strong> {{ a.resolue_par|default:"—" }}</p>
+    <p><strong>Date de résolution :</strong> {{ a.date_resolution|date:"d/m/Y H:i"|default:"—" }}</p>
+</div>
+{% if not peut_traiter %}
+<div class="panel">
+    <p class="muted">
+        <i class="bi bi-eye"></i>
+        Vous consultez cette anomalie. Seul un responsable ERA peut changer son statut ou la résoudre.
+    </p>
+</div>
+{% endif %}
+{% if peut_traiter %}
+<div class="panel">
+    <h2>Traitement</h2>
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <div class="field">
+            <label>Nouveau statut</label>
+            <select name="statut">
+                {% for value, label in statuts %}
+                <option value="{{ value }}" {% if a.statut == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn" type="submit">Enregistrer</button>
+    </form>
+</div>
+{% endif %}
+{% endblock %}

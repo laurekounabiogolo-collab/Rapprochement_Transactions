@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Importations{% endblock %}
+{% block heading %}Importation des fichiers{% endblock %}
+{% block content %}
+<div class="grid-2">
+    <div class="panel">
+        <h2>1. Fichier partenaire</h2>
+        <form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="cote" value="PARTENAIRE">
+            <div class="field">
+                <label>Partenaire</label>
+                <select name="partenaire" required>
+                    <option value="">— Choisir —</option>
+                    {% for p in partenaires %}
+                    <option value="{{ p.id }}" {% if session_partenaire == p.id %}selected{% endif %}>{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>Type d'opération</label>
+                <select name="type_operation" required>
+                    {% for value, label in types %}
+                    <option value="{{ value }}" {% if session_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>Fichier (CSV prioritaire)</label>
+                <input type="file" name="fichier" accept=".csv,.xlsx,.xls" required>
+            </div>
+            <button class="btn" type="submit"><i class="bi bi-upload"></i> Importer le partenaire</button>
+        </form>
+    </div>
+    <div class="panel">
+        <h2>2. Fichier Amplitude</h2>
+        <form method="post" enctype="multipart/form-data" class="form-grid" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="cote" value="AMPLITUDE">
+            <div class="field">
+                <label>Partenaire concerné</label>
+                <select name="partenaire">
+                    <option value="">— Optionnel —</option>
+                    {% for p in partenaires %}
+                    <option value="{{ p.id }}" {% if session_partenaire == p.id %}selected{% endif %}>{{ p.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>Type d'opération</label>
+                <select name="type_operation" required>
+                    {% for value, label in types %}
+                    <option value="{{ value }}" {% if session_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="field">
+                <label>Fichier Amplitude</label>
+                <input type="file" name="fichier" accept=".csv,.xlsx,.xls" required>
+            </div>
+            <button class="btn" type="submit"><i class="bi bi-upload"></i> Importer Amplitude</button>
+        </form>
+    </div>
+</div>
+
+<div class="panel">
+    <h2>3. Lancer le rapprochement</h2>
+    <div class="actions">
+        {% if peut_lancer %}
+        <a class="btn" href="{% url 'lancer_rapprochement' %}"><i class="bi bi-play-circle"></i> Lancer un rapprochement</a>
+        {% else %}
+        <button class="btn" type="button" disabled>Lancer un rapprochement</button>
+        <span class="muted">Importez des transactions partenaire et Amplitude pour continuer.</span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Derniers fichiers</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Fichier</th>
+                <th>Source</th>
+                <th>Type</th>
+                <th>Statut</th>
+                <th>Lignes</th>
+                <th>Observations</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for f in fichiers %}
+        <tr>
+            <td>{{ f.nom_fichier }}</td>
+            <td>{{ f.source.nom }}</td>
+            <td>{{ f.type_operation }}</td>
+            <td>{{ f.get_statut_display }}</td>
+            <td>{{ f.nombre_transactions }}</td>
+            <td>{% if f.message_erreur %}{{ f.message_erreur|truncatechars:240|linebreaksbr }}<br><a href="{% url 'telecharger_erreurs_import' f.pk %}">Télécharger les erreurs</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+            <td>{{ f.date_importation|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="muted">Aucun import pour le moment.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Sources de donn&eacute;es{% endblock %}
+{% block heading %}Gestion des sources de donn&eacute;es{% endblock %}
+{% block content %}
+<div class="actions" style="margin-bottom:16px;">
+    <a class="btn" href="{% url 'creer_source' %}"><i class="bi bi-plus-lg"></i> Nouvelle source</a>
+</div>
+
+<div class="panel">
+    <form method="get" class="form-grid">
+        <div class="field">
+            <label for="q">Recherche</label>
+            <input id="q" name="q" value="{{ filtres.q }}" placeholder="Nom ou description">
+        </div>
+        <div class="field">
+            <label for="type_source">Type</label>
+            <select id="type_source" name="type_source">
+                <option value="">Tous les types</option>
+                {% for value, label in types %}
+                <option value="{{ value }}" {% if filtres.type_source == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="actif">Statut</label>
+            <select id="actif" name="actif">
+                <option value="">Tous les statuts</option>
+                <option value="oui" {% if filtres.actif == "oui" %}selected{% endif %}>Active</option>
+                <option value="non" {% if filtres.actif == "non" %}selected{% endif %}>Inactive</option>
+            </select>
+        </div>
+        <button class="btn" type="submit"><i class="bi bi-search"></i> Filtrer</button>
+    </form>
+</div>
+
+<div class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom</th><th>Type</th><th>Statut</th>
+                <th>Fichiers import&eacute;s</th><th>Transactions</th>
+                <th>Cr&eacute;&eacute;e le</th><th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for source in sources %}
+            <tr>
+                <td>{{ source.nom }}</td>
+                <td>{{ source.get_type_source_display }}</td>
+                <td>{% if source.actif %}Active{% else %}Inactive{% endif %}</td>
+                <td>{{ source.fichiers_count }}</td>
+                <td>{{ source.transactions_count }}</td>
+                <td>{{ source.date_creation|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <div class="actions">
+                        <a class="btn light" href="{% url 'modifier_source' source.pk %}">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                        <form method="post" action="{% url 'changer_statut_source' source.pk %}">
+                            {% csrf_token %}
+                            <button class="btn secondary" type="submit">
+                                {% if source.actif %}D&eacute;sactiver{% else %}Activer{% endif %}
+                            </button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+        {% empty %}
+            <tr><td colspan="7" class="muted">Aucune source ne correspond &agrave; ces crit&egrave;res.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

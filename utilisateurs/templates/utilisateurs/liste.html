@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Utilisateurs{% endblock %}
+{% block heading %}{% if request.user.role == 'RESPONSABLE_ERA' %}Comptes agents ERA{% else %}Gestion des utilisateurs{% endif %}{% endblock %}
+{% block content %}
+<p class="muted" style="margin-bottom:14px;">
+    {% if request.user.role == 'RESPONSABLE_ERA' %}
+    Créez, modifiez, activez ou désactivez les comptes des agents ERA.
+    {% endif %}
+</p>
+<div class="actions" style="margin-bottom:16px;">
+    <a class="btn" href="{% url 'creer_utilisateur' %}"><i class="bi bi-person-plus"></i> {% if request.user.role == 'RESPONSABLE_ERA' %}Nouvel agent ERA{% else %}Nouvel utilisateur{% endif %}</a>
+</div>
+<div class="panel">
+<table>
+    <thead>
+        <tr>
+            <th>Identifiant</th><th>Nom</th><th>Email</th><th>Rôle</th><th>Actif</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for u in utilisateurs %}
+    <tr>
+        <td>{{ u.username }}</td>
+        <td>{{ u.get_full_name|default:"—" }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.get_role_display }}</td>
+        <td>{% if u.is_active %}Oui{% else %}Non{% endif %}</td>
+        <td>
+            <div class="actions">
+                <a class="btn light" href="{% url 'modifier_utilisateur' u.pk %}"><i class="bi bi-pencil"></i> Modifier</a>
+                <form method="post" action="{% url 'desactiver_utilisateur' u.pk %}">
+                    {% csrf_token %}
+                    <button class="btn secondary" type="submit">{% if u.is_active %}Désactiver{% else %}Activer{% endif %}</button>
+                </form>
+            </div>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="muted">Aucun utilisateur.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

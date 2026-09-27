@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Anomalies{% endblock %}
+{% block heading %}Anomalies{% endblock %}
+{% block content %}
+{% if not peut_traiter %}
+<p class="muted" style="margin-bottom:14px;">
+    <i class="bi bi-eye"></i>
+    Consultation uniquement. Le traitement des anomalies est réservé au responsable ERA.
+</p>
+{% endif %}
+<form class="filters" method="get">
+    <input type="text" name="reference" placeholder="Référence" value="{{ filtres.reference }}">
+    <select name="partenaire">
+        <option value="">Partenaire</option>
+        {% for p in partenaires %}
+        <option value="{{ p.id }}" {% if filtres.partenaire == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+        {% endfor %}
+    </select>
+    <select name="type_operation">
+        <option value="">Type</option>
+        {% for value, label in types %}
+        <option value="{{ value }}" {% if filtres.type_operation == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <select name="statut">
+        <option value="">Statut</option>
+        {% for value, label in statuts %}
+        <option value="{{ value }}" {% if filtres.statut == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn" type="submit">Filtrer</button>
+</form>
+<div class="panel">
+<table>
+    <thead>
+        <tr>
+            <th>Référence</th><th>Partenaire</th><th>Type op.</th>
+            <th>Type anomalie</th><th>Score</th><th>Description</th><th>Statut</th>
+            <th>Date</th><th>Résolue par</th><th></th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for a in lignes %}
+    <tr>
+        <td>{{ a.transaction.reference }}</td>
+        <td>{{ a.rapprochement.partenaire.nom }}</td>
+        <td>{{ a.rapprochement.get_type_operation_display }}</td>
+        <td>{{ a.get_type_anomalie_display }}</td>
+        <td>{{ a.score }} %</td>
+        <td>{{ a.description|truncatechars:80 }}</td>
+        <td><span class="badge">{{ a.get_statut_display }}</span></td>
+        <td>{{ a.date_creation|date:"d/m/Y" }}</td>
+        <td>{{ a.resolue_par|default:"—" }}</td>
+        <td><a href="{% url 'detail_anomalie' a.pk %}">{% if peut_traiter %}Traiter{% else %}Consulter{% endif %}</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="10" class="muted">Aucune anomalie.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

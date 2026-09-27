@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Rapprochements{% endblock %}
+{% block heading %}Rapprochements{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+    <select name="partenaire">
+        <option value="">Tous les partenaires</option>
+        {% for p in partenaires %}
+        <option value="{{ p.id }}" {% if filtre_partenaire == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+        {% endfor %}
+    </select>
+    <select name="type_operation">
+        <option value="">Tous les types</option>
+        {% for value, label in types %}
+        <option value="{{ value }}" {% if filtre_type == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <button class="btn" type="submit">Filtrer</button>
+    <a class="btn light" href="{% url 'lancer_rapprochement' %}">Nouveau rapprochement</a>
+</form>
+<div class="panel">
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th><th>Partenaire</th><th>Type</th><th>Statut</th><th>Validation</th>
+                <th>Corr.</th><th>Anom.</th><th>Non rappr.</th><th>Lancé par</th><th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in rapprochements %}
+        <tr>
+            <td><a href="{% url 'detail_rapprochement' r.pk %}">#{{ r.id }}</a></td>
+            <td>{{ r.partenaire.nom }}</td>
+            <td>{{ r.get_type_operation_display }}</td>
+            <td>{{ r.get_statut_display }}</td>
+            <td>{% if r.valide %}<span class="badge">Validé</span>{% else %}<span class="muted">En attente</span>{% endif %}</td>
+            <td>{{ r.nombre_correspondances }}</td>
+            <td>{{ r.nombre_anomalies }}</td>
+            <td>{{ r.nombre_non_rapprochees }}</td>
+            <td>{{ r.lance_par.username }}</td>
+            <td>{{ r.date_lancement|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="muted">Aucun rapprochement.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

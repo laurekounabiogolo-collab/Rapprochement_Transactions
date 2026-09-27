@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Modifier une transaction{% endblock %}
+{% block heading %}Modifier une transaction{% endblock %}
+{% block subtitle %}{{ transaction.reference }}{% endblock %}
+{% block content %}
+<div class="panel">
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="actions">
+            <button class="btn" type="submit">Enregistrer</button>
+            <a class="btn light" href={% url "liste_transactions" %}>Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

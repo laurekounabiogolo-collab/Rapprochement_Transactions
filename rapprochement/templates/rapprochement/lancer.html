@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Lancer un rapprochement{% endblock %}
+{% block heading %}Lancer un rapprochement{% endblock %}
+{% block back_url %}{% url 'liste_rapprochements' %}{% endblock %}
+{% block content %}
+<div class="panel">
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        <div class="field">
+            <label>Partenaire</label>
+            <select name="partenaire" required>
+                <option value="">&mdash; Choisir un partenaire &mdash;</option>
+                {% for p in partenaires %}
+                <option value="{{ p.id }}" {% if partenaire_id == p.id %}selected{% endif %}>{{ p.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Type d'opération</label>
+            <select name="type_operation" required>
+                <option value="">&mdash; Choisir un type d&#39;op&eacute;ration &mdash;</option>
+                {% for value, label in types %}
+                <option value="{{ value }}" {% if type_operation == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Fichier partenaire</label>
+            <select name="fichier_partenaire" required>
+                <option value="">&mdash; Choisir un fichier partenaire &mdash;</option>
+                {% for f in fichiers_p %}
+                <option value="{{ f.id }}" {% if fichier_partenaire_id == f.id %}selected{% endif %}>
+                    {{ f.nom_fichier }} — {{ f.source.nom }} ({{ f.date_importation|date:"d/m/Y H:i" }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label>Fichier Amplitude</label>
+            <select name="fichier_amplitude" required>
+                <option value="">&mdash; Choisir un fichier Amplitude &mdash;</option>
+                {% for f in fichiers_a %}
+                <option value="{{ f.id }}" {% if fichier_amplitude_id == f.id %}selected{% endif %}>
+                    {{ f.nom_fichier }} ({{ f.date_importation|date:"d/m/Y H:i" }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button class="btn" type="submit">Lancer le rapprochement</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Rapports{% endblock %}
+{% block heading %}Rapports et statistiques{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+    <select name="partenaire">
+        <option value="">Tous les partenaires</option>
+        {% for p in partenaires %}
+        <option value="{{ p.id }}" {% if filtres.partenaire == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+        {% endfor %}
+    </select>
+    <input type="date" name="date_debut" value="{{ filtres.date_debut }}">
+    <input type="date" name="date_fin" value="{{ filtres.date_fin }}">
+    <button class="btn" type="submit"><i class="bi bi-arrow-repeat"></i> Actualiser</button>
+    <a class="btn light" href="{% url 'export_csv' %}?{{ request.GET.urlencode }}"><i class="bi bi-filetype-csv"></i> Export CSV</a>
+    {% if peut_pdf %}
+    <a class="btn secondary" href="{% url 'export_pdf' %}?{{ request.GET.urlencode }}"><i class="bi bi-file-earmark-pdf"></i> Générer le PDF</a>
+    {% else %}
+    <span class="muted">La génération PDF est réservée au responsable ERA.</span>
+    {% endif %}
+</form>
+
+<div class="cards">
+    <div class="card"><h3>Transactions</h3><div class="nombre">{{ stats.total_tx }}</div></div>
+    <div class="card"><h3>Correspondances</h3><div class="nombre">{{ stats.correspondances }}</div></div>
+    <div class="card"><h3>Anomalies</h3><div class="nombre">{{ stats.anomalies }}</div></div>
+    <div class="card"><h3>Non rapprochées</h3><div class="nombre">{{ stats.non_rapprochees }}</div></div>
+</div>
+
+<div class="grid-3 charts-grid">
+    <div class="panel chart-panel">
+        <h2>Répartition par partenaire</h2>
+        <canvas id="chartPartenaire" height="200"></canvas>
+    </div>
+    <div class="panel chart-panel">
+        <h2>Répartition par type</h2>
+        <canvas id="chartType" height="200"></canvas>
+    </div>
+    <div class="panel chart-panel">
+        <h2>Statut global</h2>
+        <canvas id="chartStatut" height="200"></canvas>
+    </div>
+</div>
+
+<div class="grid-2">
+    <div class="panel">
+        <h2>Par partenaire</h2>
+        <table>
+            <thead><tr><th>Partenaire</th><th>Nombre</th></tr></thead>
+            <tbody>
+            {% for ligne in stats.par_partenaire %}
+            <tr><td>{{ ligne.source__nom }}</td><td>{{ ligne.total }}</td></tr>
+            {% empty %}
+            <tr><td colspan="2" class="muted">Pas de données.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="panel">
+        <h2>Par type d'opération</h2>
+        <table>
+            <thead><tr><th>Type</th><th>Nombre</th></tr></thead>
+            <tbody>
+            {% for ligne in stats.par_type %}
+            <tr><td>{{ ligne.type_operation }}</td><td>{{ ligne.total }}</td></tr>
+            {% empty %}
+            <tr><td colspan="2" class="muted">Pas de données.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{{ chart_partenaire|json_script:"chart-partenaire-data" }}
+{{ chart_type|json_script:"chart-type-data" }}
+{{ chart_statut|json_script:"chart-statut-data" }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const partnerData = JSON.parse(document.getElementById('chart-partenaire-data').textContent);
+  const typeData = JSON.parse(document.getElementById('chart-type-data').textContent);
+  const statutData = JSON.parse(document.getElementById('chart-statut-data').textContent);
+
+  new Chart(document.getElementById('chartPartenaire'), {
+    type: 'bar',
+    data: {
+      labels: partnerData.map(item => item.label),
+      datasets: [{
+        label: 'Transactions',
+        data: partnerData.map(item => item.value),
+        backgroundColor: '#006b3f',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+
+  new Chart(document.getElementById('chartType'), {
+    type: 'doughnut',
+    data: {
+      labels: typeData.map(item => item.label),
+      datasets: [{
+        data: typeData.map(item => item.value),
+        backgroundColor: ['#006b3f', '#2f8f5b', '#7dbd95', '#cfe9da', '#5c6770']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+
+  new Chart(document.getElementById('chartStatut'), {
+    type: 'pie',
+    data: {
+      labels: statutData.map(item => item.label),
+      datasets: [{
+        data: statutData.map(item => item.value),
+        backgroundColor: ['#006b3f', '#d97706', '#8a2a2a']
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+  });
+</script>
+{% endblock %}

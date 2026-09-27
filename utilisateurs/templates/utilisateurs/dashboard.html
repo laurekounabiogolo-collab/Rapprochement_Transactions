@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Tableau de bord{% endblock %}
+{% block subtitle %}Plateforme de rapprochement des transactions ERA{% endblock %}
+{% block content %}
+<div class="cards">
+    <div class="card">
+        <div class="card-head">
+            <h3>Transactions</h3>
+        </div>
+        <div class="nombre">{{ total_tx }}</div>
+    </div>
+    <div class="card">
+        <div class="card-head">
+            <h3>Correspondances</h3>
+        </div>
+        <div class="nombre">{{ correspondances }}</div>
+    </div>
+    <div class="card">
+        <div class="card-head">
+            <h3>Anomalies</h3>
+        </div>
+        <div class="nombre">{{ anomalies }}</div>
+    </div>
+    {% if request.user.role != 'AGENT_ERA' %}
+    <div class="card">
+        <div class="card-head">
+            <h3>Non rapprochées</h3>
+        </div>
+        <div class="nombre">{{ non_rapprochees }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="grid-2">
+    <div class="panel">
+        <h2>Répartition par partenaire</h2>
+        {% if par_partenaire %}
+        <table>
+            <thead><tr><th>Partenaire</th><th>Nombre</th></tr></thead>
+            <tbody>
+            {% for ligne in par_partenaire %}
+            <tr><td>{{ ligne.source__nom }}</td><td>{{ ligne.total }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="muted">Aucune transaction partenaire pour le moment.</p>
+        {% endif %}
+    </div>
+    <div class="panel">
+        <h2>Répartition par type d'opération</h2>
+        {% if par_type %}
+        <table>
+            <thead><tr><th>Type</th><th>Nombre</th></tr></thead>
+            <tbody>
+            {% for ligne in par_type %}
+            <tr><td>{{ ligne.type_operation }}</td><td>{{ ligne.total }}</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="muted">Aucun type d'opération renseigné pour l'instant.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div class="panel">
+    <h2>Rapprochements récents</h2>
+    {% if rapprochements_recents %}
+    <table>
+        <thead>
+            <tr>
+                <th>N°</th>
+                <th>Partenaire</th>
+                <th>Type</th>
+                <th>Statut</th>
+                <th>Correspondances</th>
+                <th>Anomalies</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for r in rapprochements_recents %}
+        <tr>
+            <td><a href="{% url 'detail_rapprochement' r.pk %}">#{{ r.id }}</a></td>
+            <td>{{ r.partenaire.nom }}</td>
+            <td>{{ r.get_type_operation_display }}</td>
+            <td><span class="badge">{{ r.get_statut_display }}</span></td>
+            <td>{{ r.nombre_correspondances }}</td>
+            <td>{{ r.nombre_anomalies }}</td>
+            <td>{{ r.date_lancement|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted">Aucun rapprochement lancé. Importez un fichier partenaire puis le fichier Amplitude correspondant.</p>
+    {% endif %}
+</div>
+{% endblock %}

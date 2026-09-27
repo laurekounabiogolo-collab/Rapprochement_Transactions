@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Transactions{% endblock %}
+{% block heading %}Transactions{% endblock %}
+{% block subtitle %}{{ total }} opération(s) correspondant aux filtres{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+    <input type="text" name="reference" placeholder="Référence" value="{{ filtres.reference }}">
+    <select name="partenaire">
+        <option value="">Source</option>
+        {% for s in sources %}
+        <option value="{{ s.id }}" {% if filtres.partenaire == s.id|stringformat:"s" %}selected{% endif %}>{{ s.nom }}</option>
+        {% endfor %}
+    </select>
+    <select name="type_operation">
+        <option value="">Type</option>
+        {% for value, label in types %}
+        <option value="{{ value }}" {% if filtres.type_operation == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <select name="statut">
+        <option value="">Statut</option>
+        {% for value, label in statuts %}
+        <option value="{{ value }}" {% if filtres.statut == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <input type="date" name="date_debut" value="{{ filtres.date_debut }}">
+    <input type="date" name="date_fin" value="{{ filtres.date_fin }}">
+    <button class="btn" type="submit">Filtrer</button>
+</form>
+<div class="panel">
+<table>
+    <thead>
+        <tr>
+            <th>Référence</th><th>Source</th><th>Type</th><th>Montant</th>
+            <th>TVA</th><th>MTTC</th><th>Statut</th><th>Date</th><th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for t in lignes %}
+    <tr>
+        <td>{{ t.reference }}</td>
+        <td>{{ t.source.nom }}</td>
+        <td>{{ t.get_type_operation_display|default:"—" }}</td>
+        <td>{{ t.montant }}</td>
+        <td>{{ t.tva_recalculee|default:t.tva|default:"—" }}</td>
+        <td>{{ t.mttc_recalculee|default:t.mttc|default:"—" }}</td>
+        <td><span class="badge">{{ t.get_statut_display }}</span></td>
+        <td>{{ t.date_transaction|date:"d/m/Y" }}</td><td><div class="actions"><a class="btn light" href={% url "modifier_transaction" t.pk %}>Modifier</a><form method="post" action={% url "supprimer_transaction" t.pk %}>{% csrf_token %}<button class="btn secondary" type="submit" onclick="return confirm('Supprimer cette transaction ?');">Supprimer</button></form></div></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9" class="muted">Aucune transaction.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

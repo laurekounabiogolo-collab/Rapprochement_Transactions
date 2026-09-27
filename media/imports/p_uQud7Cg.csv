@@ -1,0 +1,4 @@
+reference;montant;date;nom_emetteur;nom_beneficiaire;customer_fee;tta;tva;cte;mttc
+RIA1001;100000;10/08/2026;a;b;2000;100;385;500;100985
+RIA1002;50000;10/08/2026;a;b;1500;50;200;100;50350
+RIA1003;75000;11/08/2026;a;b;1800;80;346.5;375;75801.5

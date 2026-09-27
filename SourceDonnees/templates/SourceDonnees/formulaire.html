@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ titre }}{% endblock %}
+{% block heading %}{{ titre }}{% endblock %}
+{% block back_url %}{% url 'liste_sources' %}{% endblock %}
+{% block content %}
+<div class="panel">
+    <form method="post" class="form-grid">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="field">{{ form.non_field_errors }}</div>{% endif %}
+        {% for field in form %}
+        <div class="field">
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.help_text %}<small class="muted">{{ field.help_text }}</small>{% endif %}
+            {% for error in field.errors %}<small class="error">{{ error }}</small>{% endfor %}
+        </div>
+        {% endfor %}
+        <button class="btn" type="submit"><i class="bi bi-floppy"></i> Enregistrer</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Correspondances{% endblock %}
+{% block heading %}Correspondances{% endblock %}
+{% block content %}
+<form class="filters" method="get">
+    <input type="text" name="reference" placeholder="Référence" value="{{ filtres.reference }}">
+    <select name="partenaire">
+        <option value="">Partenaire</option>
+        {% for p in partenaires %}
+        <option value="{{ p.id }}" {% if filtres.partenaire == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nom }}</option>
+        {% endfor %}
+    </select>
+    <select name="type_operation">
+        <option value="">Type</option>
+        {% for value, label in types %}
+        <option value="{{ value }}" {% if filtres.type_operation == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+    <input type="date" name="date_debut" value="{{ filtres.date_debut }}">
+    <button class="btn" type="submit">Rechercher</button>
+</form>
+<div class="panel">
+<table>
+    <thead>
+        <tr>
+            <th>Référence</th><th>Partenaire</th><th>Type</th>
+            <th>Montant</th><th>MTTC part.</th><th>MTTC Amp.</th>
+            <th>Date</th><th>Score</th><th>Validation</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for c in lignes %}
+    <tr>
+        <td>{{ c.transaction_1.reference }}</td>
+        <td>{{ c.rapprochement.partenaire.nom }}</td>
+        <td>{{ c.rapprochement.get_type_operation_display }}</td>
+        <td>{{ c.transaction_1.montant }}</td>
+        <td>{{ c.transaction_1.mttc_recalculee|default:c.transaction_1.mttc }}</td>
+        <td>{{ c.transaction_2.mttc }}</td>
+        <td>{{ c.transaction_1.date_transaction|date:"d/m/Y" }}</td>
+        <td>{{ c.score_correspondance }} %</td>
+        <td>
+            {% if not c.automatique %}<span class="badge">A verifier</span>{% endif %}
+            {% if c.validee %}
+            <span class="badge">Validée{% if c.validee_par %} · {{ c.validee_par.username }}{% endif %}</span>
+            {% elif peut_valider %}
+            <form method="post" action="{% url 'valider_correspondance' c.pk %}">
+                {% csrf_token %}
+                <button class="btn" type="submit"><i class="bi bi-clipboard2-pulse"></i> Valider</button>
+            </form>
+            {% else %}
+            <span class="muted">En attente</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9" class="muted">Aucune correspondance.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}
