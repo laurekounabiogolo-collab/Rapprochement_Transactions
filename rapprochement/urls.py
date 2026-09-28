@@ -8,6 +8,7 @@ from .views import (
     lancer,
     liste_rapprochements,
     non_rapprochees,
+    supprimer_rapprochement,
     valider_correspondance,
     valider_rapprochement,
 )
@@ -15,6 +16,11 @@ from .views import (
 urlpatterns = [
     path("", liste_rapprochements, name="liste_rapprochements"),
     path("lancer/", lancer, name="lancer_rapprochement"),
+    path(
+        "<int:pk>/supprimer/",
+        supprimer_rapprochement,
+        name="supprimer_rapprochement",
+    ),
     path("<int:pk>/", detail_rapprochement, name="detail_rapprochement"),
     path("<int:pk>/valider/", valider_rapprochement, name="valider_rapprochement"),
     path("correspondances/", correspondances, name="correspondances"),

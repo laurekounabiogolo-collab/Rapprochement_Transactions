@@ -45,7 +45,7 @@
         <td>{{ t.tva_recalculee|default:t.tva|default:"—" }}</td>
         <td>{{ t.mttc_recalculee|default:t.mttc|default:"—" }}</td>
         <td><span class="badge">{{ t.get_statut_display }}</span></td>
-        <td>{{ t.date_transaction|date:"d/m/Y" }}</td><td><div class="actions"><a class="btn light" href={% url "modifier_transaction" t.pk %}>Modifier</a><form method="post" action={% url "supprimer_transaction" t.pk %}>{% csrf_token %}<button class="btn secondary" type="submit" onclick="return confirm('Supprimer cette transaction ?');">Supprimer</button></form></div></td>
+        <td>{{ t.date_transaction|date:"d/m/Y" }}</td><td><div class="actions"><a class="btn light" href="{% url 'modifier_transaction' t.pk %}">Modifier</a></div></td>
     </tr>
     {% empty %}
     <tr><td colspan="9" class="muted">Aucune transaction.</td></tr>

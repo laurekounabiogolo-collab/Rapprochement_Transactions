@@ -1,5 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db import transaction as db_transaction
+from django.http import HttpResponseNotAllowed
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -11,6 +13,7 @@ from SourceDonnees.models import SourceDonnees
 from transactions.models import Transaction
 from utilisateurs.permissions import (
     ROLES_AGENT,
+    ROLES_DIRECTEUR,
     ROLES_RESPONSABLE,
     peut_traiter_anomalie,
     peut_valider_resultats,
@@ -19,7 +22,7 @@ from utilisateurs.permissions import (
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_AGENT, *ROLES_DIRECTEUR)
 def liste_rapprochements(request):
     qs = Rapprochement.objects.select_related("partenaire", "lance_par").order_by("-date_lancement")
     partenaire = request.GET.get("partenaire", "")
@@ -38,8 +41,43 @@ def liste_rapprochements(request):
             "filtre_partenaire": partenaire,
             "filtre_type": type_operation,
             "peut_valider": peut_valider_resultats(request.user),
+            "peut_supprimer": (
+                request.user.is_superuser
+                or request.user.role in ROLES_RESPONSABLE
+            ),
         },
     )
+
+
+@login_required
+@role_autorise(*ROLES_RESPONSABLE)
+def supprimer_rapprochement(request, pk):
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    rapprochement = get_object_or_404(Rapprochement, pk=pk)
+    identifiant = rapprochement.pk
+    transaction_ids = set(rapprochement.correspondances.values_list("transaction_1_id", flat=True))
+    transaction_ids.update(rapprochement.correspondances.values_list("transaction_2_id", flat=True))
+    transaction_ids.update(rapprochement.anomalies.values_list("transaction_id", flat=True))
+    transaction_ids.update(rapprochement.non_rapprochees.values_list("transaction_id", flat=True))
+    with db_transaction.atomic():
+        rapprochement.delete()
+        for transaction in Transaction.objects.filter(pk__in=transaction_ids):
+            a_un_autre_resultat = (
+                transaction.correspondances_1.exists()
+                or transaction.correspondances_2.exists()
+                or transaction.anomalies.exists()
+                or transaction.non_rapprochees.exists()
+            )
+            if not a_un_autre_resultat:
+                transaction.statut = Transaction.Statut.EN_ATTENTE
+                transaction.save(update_fields=["statut"])
+    messages.success(
+        request,
+        f"Le rapprochement #{identifiant} et ses résultats associés ont été supprimés. "
+        "Les transactions et fichiers importés sont conservés.",
+    )
+    return redirect("liste_rapprochements")
 
 
 @login_required
@@ -133,7 +171,7 @@ def lancer(request):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_AGENT, *ROLES_DIRECTEUR)
 def detail_rapprochement(request, pk):
     r = get_object_or_404(
         Rapprochement.objects.select_related("partenaire", "lance_par", "valide_par"),

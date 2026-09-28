@@ -1,6 +1,5 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.db.models.deletion import ProtectedError
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -64,21 +63,3 @@ def modifier_transaction(request, pk):
         "transactions/formulaire.html",
         {"form": form, "transaction": transaction},
     )
-
-
-@login_required
-@role_autorise(*ROLES_AGENT)
-def supprimer_transaction(request, pk):
-    if request.method != "POST":
-        return redirect("liste_transactions")
-    transaction = get_object_or_404(Transaction, pk=pk)
-    try:
-        transaction.delete()
-    except ProtectedError:
-        messages.error(
-            request,
-            "Cette transaction fait partie d’un rapprochement et ne peut pas être supprimée.",
-        )
-    else:
-        messages.success(request, "Transaction supprimée.")
-    return redirect("liste_transactions")

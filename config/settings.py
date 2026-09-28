@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import sys
 from pathlib import Path
 
 from django.core.exceptions import ImproperlyConfigured
@@ -32,7 +33,10 @@ def _required_environment_variable(name):
 
 
 SECRET_KEY = "LaureKounaStar"
-DEBUG = os.environ.get("DJANGO_DEBUG", "false").strip().lower() in {
+# Le serveur de développement Django doit servir les fichiers statiques localement.
+# En production (WSGI/ASGI), DEBUG reste désactivé par défaut.
+_debug_defaut = "true" if len(sys.argv) > 1 and sys.argv[1] == "runserver" else "false"
+DEBUG = os.environ.get("DJANGO_DEBUG", _debug_defaut).strip().lower() in {
     "1",
     "true",
     "yes",
@@ -143,7 +147,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',

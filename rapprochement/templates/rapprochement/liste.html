@@ -23,7 +23,7 @@
         <thead>
             <tr>
                 <th>N°</th><th>Partenaire</th><th>Type</th><th>Statut</th><th>Validation</th>
-                <th>Corr.</th><th>Anom.</th><th>Non rappr.</th><th>Lancé par</th><th>Date</th>
+                <th>Corr.</th><th>Anom.</th><th>Non rappr.</th><th>Lancé par</th><th>Date</th>{% if peut_supprimer %}<th>Actions</th>{% endif %}
             </tr>
         </thead>
         <tbody>
@@ -39,9 +39,12 @@
             <td>{{ r.nombre_non_rapprochees }}</td>
             <td>{{ r.lance_par.username }}</td>
             <td>{{ r.date_lancement|date:"d/m/Y H:i" }}</td>
+            {% if peut_supprimer %}
+            <td><form method="post" action="{% url 'supprimer_rapprochement' r.pk %}">{% csrf_token %}<button class="btn danger" type="submit" onclick="return confirm('Supprimer ce rapprochement et ses résultats associés ? Les transactions et fichiers importés seront conservés.');">Supprimer</button></form></td>
+            {% endif %}
         </tr>
         {% empty %}
-        <tr><td colspan="10" class="muted">Aucun rapprochement.</td></tr>
+        <tr><td colspan="{% if peut_supprimer %}11{% else %}10{% endif %}" class="muted">Aucun rapprochement.</td></tr>
         {% endfor %}
         </tbody>
     </table>
