@@ -28,9 +28,12 @@ def calculer_score(resultat, type_operation):
     """Calcule un score sur 100 à partir des critères comparés."""
     poids = POIDS_SCORE.get(type_operation, {})
     score = sum(
-        poids.get(critere, Decimal("0"))
-        for critere, valide in resultat.items()
-        if valide is True
+        (
+            poids.get(critere, Decimal("0"))
+            for critere, valide in resultat.items()
+            if valide is True
+        ),
+        Decimal("0"),
     )
     return score.quantize(Decimal("0.01"))
 

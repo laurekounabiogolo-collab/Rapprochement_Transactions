@@ -16,14 +16,13 @@ ROLES_RESPONSABLE = (
     Utilisateur.Roles.DIRECTEUR_OMT,
 )
 ROLES_DIRECTEUR = (Utilisateur.Roles.DIRECTEUR_OMT,)
+ROLES_CONSULTATION_RESULTATS = (*ROLES_AGENT, *ROLES_DIRECTEUR)
 ROLES_GESTION_COMPTES = (
     Utilisateur.Roles.RESPONSABLE_ERA,
     Utilisateur.Roles.DIRECTEUR_OMT,
 )
-ROLES_RAPPORTS = (
-    Utilisateur.Roles.AGENT_ERA,
-    *ROLES_GESTION_COMPTES,
-)
+ROLES_GESTION_SOURCES = (Utilisateur.Roles.DIRECTEUR_OMT,)
+ROLES_RAPPORTS = ROLES_RESPONSABLE
 
 
 def role_autorise(*roles):
@@ -32,7 +31,7 @@ def role_autorise(*roles):
         def wrapper(request, *args, **kwargs):
             if not request.user.is_authenticated:
                 return redirect("connexion")
-            if request.user.is_superuser:
+            if request.user.is_superuser and request.user.role not in (Utilisateur.Roles.AGENT_ERA, Utilisateur.Roles.RESPONSABLE_ERA):
                 return vue(request, *args, **kwargs)
             if request.user.role not in roles:
                 messages.error(
@@ -48,9 +47,14 @@ def role_autorise(*roles):
 
 
 def est_responsable_metier(utilisateur):
-    """Responsable ERA ou directeur OMT (selon le rôle, pas le flag superuser)."""
-    return getattr(utilisateur, "role", None) in ROLES_RESPONSABLE
-
+    """Check approval roles; the Agent role never receives supervisor rights."""
+    role = getattr(utilisateur, "role", None)
+    if role == Utilisateur.Roles.AGENT_ERA:
+        return False
+    return bool(
+        getattr(utilisateur, "is_superuser", False)
+        or role in ROLES_RESPONSABLE
+    )
 
 def peut_traiter_anomalie(utilisateur):
     """L'agent ERA consulte seulement. Le traitement suit le rôle métier."""
@@ -66,6 +70,9 @@ def peut_generer_pdf(utilisateur):
 
 
 def peut_gerer_utilisateur(acteur, cible=None, role_cible=None):
+    if acteur.role == Utilisateur.Roles.AGENT_ERA:
+        return False
+
     if acteur.is_superuser:
         return True
 

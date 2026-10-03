@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models.deletion import ProtectedError
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect, render
 
@@ -237,4 +238,32 @@ def desactiver_utilisateur(request, pk):
     cible.is_active = not cible.is_active
     cible.save(update_fields=["is_active"])
     messages.success(request, "Statut du compte mis à jour.")
+    return redirect("liste_utilisateurs")
+
+
+@login_required
+@role_autorise(*ROLES_GESTION_COMPTES)
+def supprimer_utilisateur(request, pk):
+    if request.method != "POST":
+        return redirect("liste_utilisateurs")
+
+    cible = get_object_or_404(Utilisateur, pk=pk)
+    if cible == request.user:
+        messages.error(request, "Vous ne pouvez pas supprimer votre propre compte.")
+        return redirect("liste_utilisateurs")
+    if cible.is_superuser or not peut_gerer_utilisateur(request.user, cible=cible):
+        messages.error(request, "Vous n'êtes pas autorisé à supprimer ce compte.")
+        return redirect("liste_utilisateurs")
+
+    nom = cible.username
+    try:
+        cible.delete()
+    except ProtectedError:
+        messages.error(
+            request,
+            "Ce compte est lié à des imports ou rapprochements historiques. "
+            "Désactivez-le pour conserver l'historique.",
+        )
+    else:
+        messages.success(request, f"Le compte {nom} a été supprimé.")
     return redirect("liste_utilisateurs")

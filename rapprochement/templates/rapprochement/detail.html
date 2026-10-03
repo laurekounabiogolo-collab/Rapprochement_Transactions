@@ -17,7 +17,7 @@
         {% if r.valide %}
             Validé par {{ r.valide_par|default:"—" }} le {{ r.date_validation|date:"d/m/Y H:i" }}
         {% else %}
-            En attente de validation du responsable ERA
+            En attente de validation du Responsable ERA ou du Directeur OMT
         {% endif %}
     </p>
     <p><strong>Lancé par :</strong> {{ r.lance_par.username }} le {{ r.date_lancement|date:"d/m/Y H:i" }}</p>

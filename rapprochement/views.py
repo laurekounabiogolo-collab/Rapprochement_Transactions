@@ -13,7 +13,7 @@ from SourceDonnees.models import SourceDonnees
 from transactions.models import Transaction
 from utilisateurs.permissions import (
     ROLES_AGENT,
-    ROLES_DIRECTEUR,
+    ROLES_CONSULTATION_RESULTATS,
     ROLES_RESPONSABLE,
     peut_traiter_anomalie,
     peut_valider_resultats,
@@ -22,7 +22,7 @@ from utilisateurs.permissions import (
 
 
 @login_required
-@role_autorise(*ROLES_AGENT, *ROLES_DIRECTEUR)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def liste_rapprochements(request):
     qs = Rapprochement.objects.select_related("partenaire", "lance_par").order_by("-date_lancement")
     partenaire = request.GET.get("partenaire", "")
@@ -41,10 +41,7 @@ def liste_rapprochements(request):
             "filtre_partenaire": partenaire,
             "filtre_type": type_operation,
             "peut_valider": peut_valider_resultats(request.user),
-            "peut_supprimer": (
-                request.user.is_superuser
-                or request.user.role in ROLES_RESPONSABLE
-            ),
+            "peut_supprimer": peut_valider_resultats(request.user),
         },
     )
 
@@ -171,7 +168,7 @@ def lancer(request):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT, *ROLES_DIRECTEUR)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def detail_rapprochement(request, pk):
     r = get_object_or_404(
         Rapprochement.objects.select_related("partenaire", "lance_par", "valide_par"),
@@ -191,13 +188,13 @@ def detail_rapprochement(request, pk):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_RESPONSABLE)
 def valider_rapprochement(request, pk):
     r = get_object_or_404(Rapprochement, pk=pk)
     if request.method != "POST" or not peut_valider_resultats(request.user):
         messages.error(
             request,
-            "Seul le responsable ERA peut valider le résultat d'un rapprochement.",
+            "Seul le Responsable ERA ou le Directeur OMT peut valider ce rapprochement.",
         )
         return redirect("detail_rapprochement", pk=pk)
     if r.valide:
@@ -219,7 +216,7 @@ def valider_rapprochement(request, pk):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def correspondances(request):
     qs = Correspondance.objects.select_related(
         "rapprochement",
@@ -257,12 +254,12 @@ def correspondances(request):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_RESPONSABLE)
 def valider_correspondance(request, pk):
     if request.method != "POST" or not peut_valider_resultats(request.user):
         messages.error(
             request,
-            "Seul le responsable ERA peut valider une correspondance.",
+            "Seul le Responsable ERA ou le Directeur OMT peut valider une correspondance.",
         )
         return redirect("correspondances")
     c = get_object_or_404(Correspondance, pk=pk)
@@ -278,7 +275,7 @@ def valider_correspondance(request, pk):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def anomalies(request):
     qs = Anomalie.objects.select_related(
         "rapprochement",
@@ -313,7 +310,7 @@ def anomalies(request):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def detail_anomalie(request, pk):
 
     try:
@@ -332,7 +329,7 @@ def detail_anomalie(request, pk):
                 messages.error(
                     request,
                     "L'agent ERA peut uniquement consulter les anomalies. "
-                    "Le traitement est réservé au responsable ERA.",
+                    "Le traitement est réservé au Responsable ERA ou au Directeur OMT.",
                 )
                 return redirect("detail_anomalie", pk=pk)
             nouveau = request.POST.get("statut")
@@ -357,7 +354,7 @@ def detail_anomalie(request, pk):
 
 
 @login_required
-@role_autorise(*ROLES_AGENT)
+@role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def non_rapprochees(request):
     qs = NonRapprochee.objects.select_related(
         "rapprochement",

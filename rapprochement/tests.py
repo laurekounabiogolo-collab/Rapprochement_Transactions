@@ -260,15 +260,14 @@ class PagesSmokeTests(TestCase):
             "anomalies",
             "non_rapprochees",
             "liste_transactions",
-            "rapports",
         ]
         for name in urls:
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 200, name)
-        pdf = self.client.get(reverse("export_pdf"))
-        self.assertEqual(pdf.status_code, 302)
 
-
+        for name in ("rapports", "export_csv", "export_pdf"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 302, name)
 
 
 class ParcoursImportationEtRapprochementTests(TestCase):

@@ -21,17 +21,28 @@ class GestionSourcesTests(TestCase):
             password="MotDePasse123",
             role=Utilisateur.Roles.AGENT_ERA,
         )
+        self.directeur = Utilisateur.objects.create_user(
+            username="directeur-sources",
+            email="directeur-sources@example.com",
+            password="MotDePasse123",
+            role=Utilisateur.Roles.DIRECTEUR_OMT,
+        )
 
-    def test_liste_reservee_aux_responsables(self):
+    def test_liste_sources_reservee_au_directeur(self):
         self.client.force_login(self.agent)
         response = self.client.get(reverse("liste_sources"))
         self.assertEqual(response.status_code, 302)
+
         self.client.force_login(self.responsable)
+        response = self.client.get(reverse("liste_sources"))
+        self.assertEqual(response.status_code, 302)
+
+        self.client.force_login(self.directeur)
         response = self.client.get(reverse("liste_sources"))
         self.assertEqual(response.status_code, 200)
 
     def test_creation_source_partenaire(self):
-        self.client.force_login(self.responsable)
+        self.client.force_login(self.directeur)
         response = self.client.post(
             reverse("creer_source"),
             {
@@ -49,7 +60,6 @@ class GestionSourcesTests(TestCase):
                 actif=True,
             ).exists()
         )
-
     def test_amplitude_doit_etre_de_type_banque(self):
         form = SourceDonneesForm(
             data={
@@ -84,7 +94,7 @@ class GestionSourcesTests(TestCase):
             type_source=SourceDonnees.TypeSource.PARTENAIRE,
             actif=True,
         )
-        self.client.force_login(self.responsable)
+        self.client.force_login(self.directeur)
         url = reverse("changer_statut_source", args=[source.pk])
         response = self.client.post(url)
         self.assertRedirects(response, reverse("liste_sources"))

@@ -32,6 +32,10 @@
                     {% csrf_token %}
                     <button class="btn secondary" type="submit">{% if u.is_active %}Désactiver{% else %}Activer{% endif %}</button>
                 </form>
+                <form method="post" action="{% url 'supprimer_utilisateur' u.pk %}" onsubmit="return confirm('Supprimer définitivement cet utilisateur ? Cette action est irréversible.');">
+                    {% csrf_token %}
+                    <button class="btn danger" type="submit"><i class="bi bi-trash"></i> Supprimer</button>
+                </form>
             </div>
         </td>
     </tr>

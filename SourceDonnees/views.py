@@ -5,11 +5,11 @@ from django.shortcuts import get_object_or_404, redirect, render
 
 from SourceDonnees.forms import SourceDonneesForm
 from SourceDonnees.models import SourceDonnees
-from utilisateurs.permissions import ROLES_GESTION_COMPTES, role_autorise
+from utilisateurs.permissions import ROLES_GESTION_SOURCES, role_autorise
 
 
 @login_required
-@role_autorise(*ROLES_GESTION_COMPTES)
+@role_autorise(*ROLES_GESTION_SOURCES)
 def liste_sources(request):
     sources = SourceDonnees.objects.annotate(
         fichiers_count=Count("fichiers", distinct=True),
@@ -41,7 +41,7 @@ def liste_sources(request):
 
 
 @login_required
-@role_autorise(*ROLES_GESTION_COMPTES)
+@role_autorise(*ROLES_GESTION_SOURCES)
 def creer_source(request):
     form = SourceDonneesForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
@@ -56,7 +56,7 @@ def creer_source(request):
 
 
 @login_required
-@role_autorise(*ROLES_GESTION_COMPTES)
+@role_autorise(*ROLES_GESTION_SOURCES)
 def modifier_source(request, pk):
     source = get_object_or_404(SourceDonnees, pk=pk)
     form = SourceDonneesForm(request.POST or None, instance=source)
@@ -72,7 +72,7 @@ def modifier_source(request, pk):
 
 
 @login_required
-@role_autorise(*ROLES_GESTION_COMPTES)
+@role_autorise(*ROLES_GESTION_SOURCES)
 def changer_statut_source(request, pk):
     if request.method != "POST":
         return redirect("liste_sources")

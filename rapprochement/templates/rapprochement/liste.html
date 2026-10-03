@@ -16,7 +16,9 @@
         {% endfor %}
     </select>
     <button class="btn" type="submit">Filtrer</button>
+{% if request.user.is_superuser or request.user.role == 'AGENT_ERA' or request.user.role == 'RESPONSABLE_ERA' %}
     <a class="btn light" href="{% url 'lancer_rapprochement' %}">Nouveau rapprochement</a>
+{% endif %}
 </form>
 <div class="panel">
     <table>

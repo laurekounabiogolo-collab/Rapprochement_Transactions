@@ -6,6 +6,7 @@ from .views import (
     dashboard,
     deconnexion,
     desactiver_utilisateur,
+    supprimer_utilisateur,
     liste_utilisateurs,
     modifier_utilisateur,
 )
@@ -22,4 +23,5 @@ urlpatterns = [
         desactiver_utilisateur,
         name="desactiver_utilisateur",
     ),
+    path("utilisateurs/<int:pk>/supprimer/", supprimer_utilisateur, name="supprimer_utilisateur"),
 ]

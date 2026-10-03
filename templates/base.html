@@ -27,36 +27,42 @@
         <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}active{% endif %}">
             <i class="bi bi-speedometer2"></i><span>Dashboard</span>
         </a>
+{% if request.user.is_superuser or request.user.role == 'AGENT_ERA' or request.user.role == 'RESPONSABLE_ERA' %}
         <a href="{% url 'importation' %}" class="{% if url_name == 'importation' %}active{% endif %}">
             <i class="bi bi-cloud-arrow-up"></i><span>Importations</span>
         </a>
+{% endif %}
         <a href="{% url 'liste_rapprochements' %}" class="{% if url_name == 'liste_rapprochements' or url_name == 'lancer_rapprochement' or url_name == 'detail_rapprochement' %}active{% endif %}">
             <i class="bi bi-arrow-left-right"></i><span>Rapprochements</span>
         </a>
+{% if request.user.is_superuser or request.user.role == 'AGENT_ERA' or request.user.role == 'RESPONSABLE_ERA' %}
         <a href="{% url 'liste_transactions' %}" class="{% if url_name == 'liste_transactions' %}active{% endif %}">
             <i class="bi bi-list-ul"></i><span>Transactions</span>
         </a>
+{% endif %}
         <a href="{% url 'correspondances' %}" class="{% if url_name == 'correspondances' %}active{% endif %}">
             <i class="bi bi-link-45deg"></i><span>Correspondances</span>
         </a>
         <a href="{% url 'anomalies' %}" class="{% if url_name == 'anomalies' or url_name == 'detail_anomalie' %}active{% endif %}">
             <i class="bi bi-exclamation-triangle"></i><span>Anomalies</span>
         </a>
-        {% if request.user.is_superuser or request.user.role != 'AGENT_ERA' %}
         <a href="{% url 'non_rapprochees' %}" class="{% if url_name == 'non_rapprochees' %}active{% endif %}">
             <i class="bi bi-question-circle"></i><span>Non rapprochées</span>
         </a>
+{% if request.user.role != 'AGENT_ERA' %}
         <a href="{% url 'rapports' %}" class="{% if url_name == 'rapports' or url_name == 'export_pdf' %}active{% endif %}">
             <i class="bi bi-bar-chart-line"></i><span>Rapports</span>
         </a>
-        {% if request.user.is_superuser or request.user.role == 'RESPONSABLE_ERA' or request.user.role == 'DIRECTEUR_OMT' %}
+{% endif %}
+        {% if request.user.role == 'DIRECTEUR_OMT' or request.user.is_superuser and request.user.role != 'RESPONSABLE_ERA' and request.user.role != 'AGENT_ERA' %}
         <a href="{% url 'liste_sources' %}" class="{% if url_name == 'liste_sources' or url_name == 'creer_source' or url_name == 'modifier_source' %}active{% endif %}">
             <i class="bi bi-diagram-3"></i><span>Sources de donn&eacute;es</span>
         </a>
+        {% endif %}
+        {% if request.user.role == 'RESPONSABLE_ERA' or request.user.role == 'DIRECTEUR_OMT' or request.user.is_superuser and request.user.role != 'AGENT_ERA' %}
         <a href="{% url 'liste_utilisateurs' %}" class="{% if url_name == 'liste_utilisateurs' or url_name == 'creer_utilisateur' or url_name == 'modifier_utilisateur' %}active{% endif %}">
             <i class="bi bi-people"></i><span>{% if request.user.role == 'RESPONSABLE_ERA' %}Agents ERA{% else %}Utilisateurs{% endif %}</span>
         </a>
-        {% endif %}
         {% endif %}
         <form method="post" action="{% url 'deconnexion' %}">
             {% csrf_token %}
