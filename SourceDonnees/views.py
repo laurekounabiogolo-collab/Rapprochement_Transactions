@@ -12,8 +12,16 @@ from utilisateurs.permissions import ROLES_GESTION_SOURCES, role_autorise
 @role_autorise(*ROLES_GESTION_SOURCES)
 def liste_sources(request):
     sources = SourceDonnees.objects.annotate(
-        fichiers_count=Count("fichiers", distinct=True),
-        transactions_count=Count("transactions", distinct=True),
+        fichiers_count=Count(
+            "fichiers",
+            filter=Q(fichiers__importe_par=request.user),
+            distinct=True,
+        ),
+        transactions_count=Count(
+            "transactions",
+            filter=Q(transactions__fichier_importe__importe_par=request.user),
+            distinct=True,
+        ),
     ).order_by("nom")
 
     recherche = request.GET.get("q", "").strip()

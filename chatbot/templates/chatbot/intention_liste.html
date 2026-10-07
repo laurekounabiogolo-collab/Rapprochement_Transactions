@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Intentions du chatbot{% endblock %}
+{% block heading %}Entraînement du chatbot{% endblock %}
+{% block content %}
+<div class="panel">
+    <p>Ajoute des formulations exemples, une par ligne. À la prochaine question, le modèle les utilisera pour reconnaître l’intention.</p>
+    <a class="btn" href="{% url 'chatbot_creer_intention' %}">Ajouter une intention</a>
+</div>
+<div class="panel">
+<table>
+    <thead><tr><th>Intention</th><th>Code</th><th>Exemples</th><th>État</th><th></th></tr></thead>
+    <tbody>
+    {% for intention in intentions %}
+    <tr>
+        <td>{{ intention.nom }}</td>
+        <td>{{ intention.code }}</td>
+        <td>{{ intention.obtenir_exemples|length }}</td>
+        <td>{% if intention.active %}Active{% else %}Désactivée{% endif %}</td>
+        <td><a href="{% url 'chatbot_modifier_intention' intention.pk %}">Modifier</a></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">Aucune intention configurée.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% endblock %}

@@ -32,9 +32,8 @@ def _required_environment_variable(name):
     return value
 
 
-SECRET_KEY = "LaureKounaStar"
-# Le serveur de développement Django doit servir les fichiers statiques localement.
-# En production (WSGI/ASGI), DEBUG reste désactivé par défaut.
+SECRET_KEY = _required_environment_variable("DJANGO_SECRET_KEY")
+# En local, runserver active DEBUG par defaut ; WSGI/ASGI reste en mode securise.
 _debug_defaut = "true" if len(sys.argv) > 1 and sys.argv[1] == "runserver" else "false"
 DEBUG = os.environ.get("DJANGO_DEBUG", _debug_defaut).strip().lower() in {
     "1",
@@ -42,14 +41,13 @@ DEBUG = os.environ.get("DJANGO_DEBUG", _debug_defaut).strip().lower() in {
     "yes",
     "on",
 }
-ALLOWED_HOSTS = [
-    "*"
-]
-if not DEBUG and not ALLOWED_HOSTS:
-    raise ImproperlyConfigured(
-        "Set DJANGO_ALLOWED_HOSTS when DEBUG is disabled."
-    )
-
+if DEBUG:
+    _hotes_bruts = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1")
+else:
+    _hotes_bruts = _required_environment_variable("DJANGO_ALLOWED_HOSTS")
+ALLOWED_HOSTS = [hote.strip() for hote in _hotes_bruts.split(",") if hote.strip()]
+if not ALLOWED_HOSTS:
+    raise ImproperlyConfigured("Configure DJANGO_ALLOWED_HOSTS avec au moins un hote.")
 
 # Application definition
 
@@ -66,6 +64,7 @@ INSTALLED_APPS = [
     'transactions',
     'importations',
     'rapports',
+    'chatbot',
 ]
 
 MIDDLEWARE = [
@@ -104,11 +103,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "rapprochement_db",
-        "USER": "postgres",
-        "PASSWORD": "12345678",
-        "HOST": "localhost",
-        "PORT": "5432",
+        "NAME": _required_environment_variable("POSTGRES_DB"),
+        "USER": _required_environment_variable("POSTGRES_USER"),
+        "PASSWORD": _required_environment_variable("POSTGRES_PASSWORD"),
+        "HOST": _required_environment_variable("POSTGRES_HOST"),
+        "PORT": _required_environment_variable("POSTGRES_PORT"),
     }
 }
 

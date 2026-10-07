@@ -18,7 +18,7 @@ from utilisateurs.permissions import ROLES_AGENT, role_autorise
 @role_autorise(*ROLES_AGENT)
 def telecharger_erreurs_import(request, pk):
     fichier = get_object_or_404(
-        FichierImporte.objects.select_related("source"),
+        FichierImporte.objects.filter(importe_par=request.user).select_related("source"),
         pk=pk,
     )
     erreurs = [ligne for ligne in fichier.message_erreur.splitlines() if ligne.strip()]
@@ -93,6 +93,7 @@ def importation(request):
             partenaire = source
 
         doublon_fichier = FichierImporte.objects.filter(
+            importe_par=request.user,
             source=source,
             empreinte=empreinte,
             type_operation=type_operation,
@@ -122,6 +123,7 @@ def importation(request):
             source.nom,
             fichier_importe=enregistrement,
             type_operation=type_operation,
+                    utilisateur=request.user,
         )
 
         if not resultat.get("ok"):
@@ -166,7 +168,8 @@ def importation(request):
         return redirect("importation")
 
     fichiers = (
-        FichierImporte.objects.select_related("source", "importe_par")
+        FichierImporte.objects.filter(importe_par=request.user)
+        .select_related("source", "importe_par")
         .order_by("-date_importation")[:20]
     )
     return render(
@@ -178,12 +181,14 @@ def importation(request):
             "fichiers": fichiers,
             "peut_lancer": (
                 FichierImporte.objects.filter(
+                    importe_par=request.user,
                     statut=FichierImporte.Statut.TRAITE,
                     transactions__isnull=False,
                 )
                 .exclude(source__nom="Amplitude")
                 .exists()
                 and FichierImporte.objects.filter(
+                    importe_par=request.user,
                     source__nom="Amplitude",
                     statut=FichierImporte.Statut.TRAITE,
                     transactions__isnull=False,

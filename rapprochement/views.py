@@ -24,7 +24,7 @@ from utilisateurs.permissions import (
 @login_required
 @role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def liste_rapprochements(request):
-    qs = Rapprochement.objects.select_related("partenaire", "lance_par").order_by("-date_lancement")
+    qs = Rapprochement.objects.filter(lance_par=request.user).select_related("partenaire", "lance_par").order_by("-date_lancement")
     partenaire = request.GET.get("partenaire", "")
     type_operation = request.GET.get("type_operation", "")
     if partenaire:
@@ -51,7 +51,7 @@ def liste_rapprochements(request):
 def supprimer_rapprochement(request, pk):
     if request.method != "POST":
         return HttpResponseNotAllowed(["POST"])
-    rapprochement = get_object_or_404(Rapprochement, pk=pk)
+    rapprochement = get_object_or_404(Rapprochement.objects.filter(lance_par=request.user), pk=pk)
     identifiant = rapprochement.pk
     transaction_ids = set(rapprochement.correspondances.values_list("transaction_1_id", flat=True))
     transaction_ids.update(rapprochement.correspondances.values_list("transaction_2_id", flat=True))
@@ -88,8 +88,9 @@ def lancer(request):
     if request.method == "POST":
         partenaire = get_object_or_404(partenaires, pk=request.POST.get("partenaire"))
         type_operation = request.POST.get("type_operation")
-        fp = get_object_or_404(FichierImporte, pk=request.POST.get("fichier_partenaire"))
-        fa = get_object_or_404(FichierImporte, pk=request.POST.get("fichier_amplitude"))
+        fichiers_utilisateur = FichierImporte.objects.filter(importe_par=request.user)
+        fp = get_object_or_404(fichiers_utilisateur, pk=request.POST.get("fichier_partenaire"))
+        fa = get_object_or_404(fichiers_utilisateur, pk=request.POST.get("fichier_amplitude"))
 
         if type_operation not in dict(Transaction.TypeOperation.choices):
             messages.error(request, "Type d'opération invalide.")
@@ -132,6 +133,7 @@ def lancer(request):
 
     fichiers_p = list(
         FichierImporte.objects.filter(
+            importe_par=request.user,
             source__type_source=SourceDonnees.TypeSource.PARTENAIRE,
             source__actif=True,
             statut=FichierImporte.Statut.TRAITE,
@@ -142,6 +144,7 @@ def lancer(request):
     )
     fichiers_a = list(
         FichierImporte.objects.filter(
+            importe_par=request.user,
             source__nom="Amplitude",
             source__type_source=SourceDonnees.TypeSource.BANQUE,
             source__actif=True,
@@ -171,7 +174,7 @@ def lancer(request):
 @role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def detail_rapprochement(request, pk):
     r = get_object_or_404(
-        Rapprochement.objects.select_related("partenaire", "lance_par", "valide_par"),
+        Rapprochement.objects.filter(lance_par=request.user).select_related("partenaire", "lance_par", "valide_par"),
         pk=pk,
     )
     return render(
@@ -190,7 +193,7 @@ def detail_rapprochement(request, pk):
 @login_required
 @role_autorise(*ROLES_RESPONSABLE)
 def valider_rapprochement(request, pk):
-    r = get_object_or_404(Rapprochement, pk=pk)
+    r = get_object_or_404(Rapprochement.objects.filter(lance_par=request.user), pk=pk)
     if request.method != "POST" or not peut_valider_resultats(request.user):
         messages.error(
             request,
@@ -218,7 +221,7 @@ def valider_rapprochement(request, pk):
 @login_required
 @role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def correspondances(request):
-    qs = Correspondance.objects.select_related(
+    qs = Correspondance.objects.filter(rapprochement__lance_par=request.user).select_related(
         "rapprochement",
         "rapprochement__partenaire",
         "transaction_1",
@@ -262,7 +265,7 @@ def valider_correspondance(request, pk):
             "Seul le Responsable ERA ou le Directeur OMT peut valider une correspondance.",
         )
         return redirect("correspondances")
-    c = get_object_or_404(Correspondance, pk=pk)
+    c = get_object_or_404(Correspondance.objects.filter(rapprochement__lance_par=request.user), pk=pk)
     if c.validee:
         messages.info(request, "Cette correspondance est déjà validée.")
         return redirect("correspondances")
@@ -277,7 +280,7 @@ def valider_correspondance(request, pk):
 @login_required
 @role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def anomalies(request):
-    qs = Anomalie.objects.select_related(
+    qs = Anomalie.objects.filter(rapprochement__lance_par=request.user).select_related(
         "rapprochement",
         "rapprochement__partenaire",
         "transaction",
@@ -315,7 +318,7 @@ def detail_anomalie(request, pk):
 
     try:
         a = get_object_or_404(
-            Anomalie.objects.select_related(
+            Anomalie.objects.filter(rapprochement__lance_par=request.user).select_related(
                 "rapprochement",
                 "transaction",
                 "transaction__source",
@@ -356,7 +359,7 @@ def detail_anomalie(request, pk):
 @login_required
 @role_autorise(*ROLES_CONSULTATION_RESULTATS)
 def non_rapprochees(request):
-    qs = NonRapprochee.objects.select_related(
+    qs = NonRapprochee.objects.filter(rapprochement__lance_par=request.user).select_related(
         "rapprochement",
         "rapprochement__partenaire",
         "transaction",

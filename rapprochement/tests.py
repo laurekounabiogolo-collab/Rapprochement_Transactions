@@ -202,8 +202,13 @@ class RapprochementIntegrationTests(TestCase):
             fa,
             Transaction.TypeOperation.ENVOI,
         )
-        self.assertEqual(Correspondance.objects.filter(rapprochement=r).count(), 1)
-        self.assertEqual(Anomalie.objects.filter(rapprochement=r).count(), 1)
+        correspondances = Correspondance.objects.filter(rapprochement=r)
+        self.assertEqual(correspondances.count(), 2)
+        self.assertEqual(correspondances.filter(automatique=True).count(), 1)
+        self.assertEqual(correspondances.filter(automatique=False).count(), 1)
+        a_verifier = correspondances.get(transaction_1__reference="RIA1002")
+        self.assertEqual(a_verifier.score_correspondance, Decimal("90.00"))
+        self.assertEqual(Anomalie.objects.filter(rapprochement=r).count(), 0)
         self.assertEqual(NonRapprochee.objects.filter(rapprochement=r).count(), 2)
 
 

@@ -12,7 +12,9 @@ from utilisateurs.permissions import ROLES_AGENT, role_autorise
 @login_required
 @role_autorise(*ROLES_AGENT)
 def liste_transactions(request):
-    qs = Transaction.objects.select_related("source", "fichier_importe").order_by(
+    qs = Transaction.objects.filter(
+        fichier_importe__importe_par=request.user
+    ).select_related("source", "fichier_importe").order_by(
         "-date_transaction"
     )
     reference = request.GET.get("reference", "").strip()
@@ -52,7 +54,7 @@ def liste_transactions(request):
 @login_required
 @role_autorise(*ROLES_AGENT)
 def modifier_transaction(request, pk):
-    transaction = get_object_or_404(Transaction, pk=pk)
+    transaction = get_object_or_404(Transaction.objects.filter(fichier_importe__importe_par=request.user), pk=pk)
     form = TransactionForm(request.POST or None, instance=transaction)
     if request.method == "POST" and form.is_valid():
         form.save()

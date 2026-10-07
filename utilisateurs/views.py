@@ -59,30 +59,32 @@ def deconnexion(request):
 
 @login_required
 def dashboard(request):
-    total_tx = Transaction.objects.count()
-    correspondances = Correspondance.objects.count()
-    anomalies = Anomalie.objects.count()
-    non_rapprochees = NonRapprochee.objects.count()
+    transactions_utilisateur = Transaction.objects.filter(fichier_importe__importe_par=request.user)
+    rapprochements_utilisateur = Rapprochement.objects.filter(lance_par=request.user)
+    total_tx = transactions_utilisateur.count()
+    correspondances = Correspondance.objects.filter(rapprochement__in=rapprochements_utilisateur).count()
+    anomalies = Anomalie.objects.filter(rapprochement__in=rapprochements_utilisateur).count()
+    non_rapprochees = NonRapprochee.objects.filter(rapprochement__in=rapprochements_utilisateur).count()
     if non_rapprochees == 0:
-        non_rapprochees = Transaction.objects.filter(
+        non_rapprochees = transactions_utilisateur.filter(
             statut=Transaction.Statut.NON_RAPPROCHEE
         ).count()
 
     par_partenaire = (
-        Transaction.objects.exclude(source__nom="Amplitude")
+        transactions_utilisateur.exclude(source__nom="Amplitude")
         .values("source__nom")
         .annotate(total=Count("id"))
         .order_by("source__nom")
     )
     par_type = (
-        Transaction.objects.exclude(type_operation__isnull=True)
+        transactions_utilisateur.exclude(type_operation__isnull=True)
         .exclude(type_operation="")
         .values("type_operation")
         .annotate(total=Count("id"))
         .order_by("type_operation")
     )
     rapprochements_recents = (
-        Rapprochement.objects.select_related("partenaire", "lance_par")
+        rapprochements_utilisateur.select_related("partenaire", "lance_par")
         .order_by("-date_lancement")[:8]
     )
 

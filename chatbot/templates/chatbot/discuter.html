@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Assistant{% endblock %}
+{% block heading %}Assistant{% endblock %}
+{% block subtitle %}Une aide simple pour utiliser le rapprochement{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/chatbot.css' %}?v=2">
+{% endblock %}
+{% block content %}
+<div class="assistant-page">
+    <div class="assistant-intro">
+        <div>
+            <span class="assistant-eyebrow">ASSISTANT ERA</span>
+            <h2>Comment puis-je t’aider ?</h2>
+            <p>Pose une question sur les imports, les rapprochements, les anomalies ou les statuts.</p>
+        </div>
+        {% if peut_gerer %}
+        <a class="assistant-manage-link" href="{% url 'chatbot_intentions' %}">
+            <i class="bi bi-sliders"></i><span>Gérer les réponses</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <section class="assistant-chat" aria-label="Conversation avec l’assistant">
+        <header class="assistant-chat-header">
+            <div class="assistant-avatar"><i class="bi bi-chat-dots-fill"></i></div>
+            <div class="assistant-identity">
+                <strong>Assistant ERA</strong>
+                <span><i></i> Modèle local actif</span>
+            </div>
+            <span class="assistant-private"><i class="bi bi-shield-check"></i> Données locales</span>
+        </header>
+
+        <div class="assistant-messages" aria-live="polite" aria-relevant="additions">
+            {% if historique %}
+                {% for echange in historique %}
+                <div class="assistant-message assistant-message-user">
+                    <div class="assistant-message-label">Vous</div>
+                    <p>{{ echange.question }}</p>
+                </div>
+                <div class="assistant-message assistant-message-bot">
+                    <div class="assistant-message-label"><i class="bi bi-chat-dots-fill"></i> Assistant ERA</div>
+                    {% if echange.intention %}<span class="assistant-topic">Sujet : {{ echange.intention }}</span>{% endif %}
+                    <p>{{ echange.reponse }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="assistant-welcome">
+                <div class="assistant-welcome-icon"><i class="bi bi-stars"></i></div>
+                <h3>Bienvenue !</h3>
+                <p>Je peux t’aider à comprendre les fonctions de l’application. Choisis une suggestion ou écris ta question.</p>
+            </div>
+            <div class="assistant-suggestions">
+                <span>Essaie par exemple</span>
+                <div class="assistant-suggestion-list">
+                    <button type="button" class="assistant-suggestion">Comment importer un fichier ?</button>
+                    <button type="button" class="assistant-suggestion">Comment fonctionne le rapprochement ?</button>
+                    <button type="button" class="assistant-suggestion">Que signifie une anomalie ?</button>
+                    <button type="button" class="assistant-suggestion">Que veut dire « non rapprochée » ?</button>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <form class="assistant-composer" method="post">
+            {% csrf_token %}
+            <label class="visually-hidden" for="assistant-question">Écris ta question</label>
+            <textarea id="assistant-question" name="question" maxlength="500" rows="1"
+                placeholder="Écris ta question ici…" required aria-describedby="assistant-hint"></textarea>
+            <button type="submit" aria-label="Envoyer la question">
+                <i class="bi bi-arrow-up"></i>
+            </button>
+        </form>
+        <p id="assistant-hint" class="assistant-disclaimer">Entrée pour envoyer · Maj + Entrée pour aller à la ligne. L’historique reste disponible dans cette session.</p>
+    </section>
+</div>
+<script>
+(() => {
+    const form = document.querySelector(".assistant-composer");
+    const input = document.querySelector("#assistant-question");
+    const messages = document.querySelector(".assistant-messages");
+    if (!form || !input || !messages) return;
+
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+            event.preventDefault();
+            if (input.value.trim()) form.requestSubmit();
+        }
+    });
+
+    document.querySelectorAll(".assistant-suggestion").forEach((button) => {
+        button.addEventListener("click", () => {
+            input.value = button.textContent.trim();
+            input.focus();
+        });
+    });
+
+    messages.scrollTop = messages.scrollHeight;
+    input.focus();
+})();
+</script>
+{% endblock %}

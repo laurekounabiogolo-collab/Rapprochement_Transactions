@@ -15,9 +15,12 @@ from transactions.models import Transaction
 from utilisateurs.permissions import ROLES_RAPPORTS, peut_generer_pdf, role_autorise
 
 
-def _statistiques(date_debut=None, date_fin=None, partenaire_id=None):
+def _statistiques(date_debut=None, date_fin=None, partenaire_id=None, utilisateur=None):
     tx = Transaction.objects.all()
     rapp = Rapprochement.objects.all()
+    if utilisateur is not None:
+        tx = tx.filter(fichier_importe__importe_par=utilisateur)
+        rapp = rapp.filter(lance_par=utilisateur)
     if date_debut:
         tx = tx.filter(date_transaction__date__gte=date_debut)
         rapp = rapp.filter(date_lancement__date__gte=date_debut)
@@ -30,15 +33,9 @@ def _statistiques(date_debut=None, date_fin=None, partenaire_id=None):
 
     stats = {
         "total_tx": tx.count(),
-        "correspondances": Correspondance.objects.filter(rapprochement__in=rapp).count()
-        if (date_debut or date_fin or partenaire_id)
-        else Correspondance.objects.count(),
-        "anomalies": Anomalie.objects.filter(rapprochement__in=rapp).count()
-        if (date_debut or date_fin or partenaire_id)
-        else Anomalie.objects.count(),
-        "non_rapprochees": NonRapprochee.objects.filter(rapprochement__in=rapp).count()
-        if (date_debut or date_fin or partenaire_id)
-        else NonRapprochee.objects.count(),
+        "correspondances": Correspondance.objects.filter(rapprochement__in=rapp).count(),
+        "anomalies": Anomalie.objects.filter(rapprochement__in=rapp).count(),
+        "non_rapprochees": NonRapprochee.objects.filter(rapprochement__in=rapp).count(),
         "par_partenaire": tx.exclude(source__nom="Amplitude")
         .values("source__nom")
         .annotate(total=Count("id"))
@@ -73,7 +70,7 @@ def rapports(request):
     date_debut = request.GET.get("date_debut") or None
     date_fin = request.GET.get("date_fin") or None
     partenaire_id = request.GET.get("partenaire") or None
-    stats = _statistiques(date_debut, date_fin, partenaire_id)
+    stats = _statistiques(date_debut, date_fin, partenaire_id, request.user)
     return render(
         request,
         "rapports/rapports.html",
@@ -95,7 +92,7 @@ def export_csv(request):
     date_debut = request.GET.get("date_debut") or None
     date_fin = request.GET.get("date_fin") or None
     partenaire_id = request.GET.get("partenaire") or None
-    stats = _statistiques(date_debut, date_fin, partenaire_id)
+    stats = _statistiques(date_debut, date_fin, partenaire_id, request.user)
 
     buffer = StringIO()
     writer = csv.writer(buffer, delimiter=";")
@@ -134,7 +131,7 @@ def export_pdf(request):
     date_debut = request.GET.get("date_debut") or None
     date_fin = request.GET.get("date_fin") or None
     partenaire_id = request.GET.get("partenaire") or None
-    stats = _statistiques(date_debut, date_fin, partenaire_id)
+    stats = _statistiques(date_debut, date_fin, partenaire_id, request.user)
     auteur = request.user.get_full_name() or request.user.username
     contenu = generer_pdf_rapport(stats, date_debut, date_fin, auteur)
     response = HttpResponse(contenu, content_type="application/pdf")

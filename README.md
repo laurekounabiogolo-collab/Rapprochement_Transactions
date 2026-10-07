@@ -13,6 +13,7 @@ Ce guide décrit l’installation et l’utilisation en environnement local. Il 
 - Rapprochement des envois, retraits et remboursements.
 - Consultation des correspondances, anomalies et transactions non rapprochées.
 - Rapports statistiques avec export CSV et PDF.
+- Chatbot local entraîné à partir d’intentions, d’exemples et de réponses administrées dans l’application.
 
 L’extraction du texte PDF existe dans le code, mais les fichiers PDF ne sont pas acceptés par le formulaire d’import et ne sont pas transformés en lignes de transactions. Utilisez un export CSV ou Excel.
 
@@ -42,7 +43,7 @@ Django lit sa clé, le mode debug, les hôtes autorisés et les paramètres Post
 Pour un terminal PowerShell local, définissez ces variables après avoir activé l'environnement virtuel et avant les commandes Django :
 
 ~~~powershell
-$env:DJANGO_SECRET_KEY = python -c "import secrets; print(secrets.token_urlsafe(50))"
+$env:DJANGO_SECRET_KEY = (& python -c "import secrets; print(secrets.token_urlsafe(50))")
 $env:DJANGO_DEBUG = "true"
 $env:DJANGO_ALLOWED_HOSTS = "localhost,127.0.0.1"
 
@@ -58,6 +59,10 @@ Adaptez les valeurs PostgreSQL à votre installation. Ces variables ne sont déf
 
 Pour une mise en production, définissez une clé secrète propre à l'application, DJANGO_DEBUG=false, et DJANGO_ALLOWED_HOSTS avec les noms d'hôtes réels, séparés par des virgules. Les cinq variables POSTGRES_* doivent aussi pointer vers la base de production. Le démarrage échoue explicitement si la clé, les paramètres PostgreSQL ou, en mode production, la liste des hôtes autorisés manquent.
 
+## Création de la base PostgreSQL
+
+Vérifiez que le service PostgreSQL est démarré. Dans pgAdmin, créez une base de données dont le nom correspond à `POSTGRES_DB` (par exemple `rapprochement_db`) et attribuez-la à l'utilisateur défini par `POSTGRES_USER` (par exemple `postgres`). La base doit exister avant l'application des migrations. Vous pouvez également la créer avec `psql` si cet outil est installé et accessible depuis le terminal.
+
 ## Initialisation
 
 Appliquez les migrations :
@@ -71,6 +76,8 @@ Créez un compte administrateur :
 ```powershell
 python manage.py createsuperuser
 ```
+
+Ce compte donne accès à l'administration Django à l'adresse <http://127.0.0.1:8000/admin/>. Utilisez-la pour vérifier les utilisateurs et créer les sources nécessaires si elles n'existent pas déjà. Pour le rapprochement, créez une source partenaire active et une source bancaire active nommée exactement **Amplitude**. Les comptes qui utilisent l'interface métier doivent avoir un rôle applicatif approprié (Agent ERA, Responsable ERA ou Directeur OMT).
 
 Démarrez le serveur local :
 
@@ -173,3 +180,10 @@ Une base PostgreSQL de test accessible peut être nécessaire selon la configura
 - La clé secrète et les identifiants de base ne doivent pas rester dans le code ; externalisez-les avant le déploiement.
 - `DEBUG` doit être désactivé et `ALLOWED_HOSTS` configuré pour l’environnement réel.
 - Prévoir une politique de sauvegarde PostgreSQL et de rétention de `media/imports/`.
+
+
+## Assistant local
+
+L’assistant classe les questions avec un modèle scikit-learn entraîné à partir des intentions et exemples enregistrés dans l’application. Les réponses sont rédigées et administrées par les utilisateurs autorisés. Le modèle ne consulte pas les transactions et n’appelle aucun service d’IA externe.
+
+Après mise à jour des dépendances et application des migrations, ouvrez **Assistant**. Les Responsables ERA et le Directeur OMT peuvent gérer les intentions, leurs exemples (une formulation par ligne) et leurs réponses. Le modèle utilise les exemples actifs et se réentraîne automatiquement lorsque le jeu d’exemples change.

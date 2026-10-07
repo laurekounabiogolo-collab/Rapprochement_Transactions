@@ -7,6 +7,7 @@
     <title>{% block title %}Rapprochement ERA{% endblock %} — BANGE</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260928.1">
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
 {% with url_name=request.resolver_match.url_name %}
@@ -26,6 +27,9 @@
     <nav class="menu">
         <a href="{% url 'dashboard' %}" class="{% if url_name == 'dashboard' %}active{% endif %}">
             <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+        </a>
+        <a href="{% url 'chatbot' %}" class="{% if url_name == 'chatbot' or url_name == 'chatbot_intentions' %}active{% endif %}">
+            <i class="bi bi-chat-dots"></i><span>Assistant</span>
         </a>
 {% if request.user.is_superuser or request.user.role == 'AGENT_ERA' or request.user.role == 'RESPONSABLE_ERA' %}
         <a href="{% url 'importation' %}" class="{% if url_name == 'importation' %}active{% endif %}">

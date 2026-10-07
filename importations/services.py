@@ -308,7 +308,7 @@ def _est_ria_ou_yuba(nom_source):
     return "RIA" in nom or "YUBA" in nom
 
 
-def transaction_deja_presente(source, reference, date_transaction, montant):
+def transaction_deja_presente(source, reference, date_transaction, montant, utilisateur=None):
     """Protection contre les doublons : ne supprime jamais les existants."""
     filtres = {
         "source": source,
@@ -316,6 +316,8 @@ def transaction_deja_presente(source, reference, date_transaction, montant):
         "montant": montant,
     }
     qs = Transaction.objects.filter(**filtres)
+    if utilisateur is not None:
+        qs = qs.filter(fichier_importe__importe_par=utilisateur)
     if date_transaction:
         qs = qs.filter(date_transaction=date_transaction)
     return qs.exists()
@@ -326,6 +328,7 @@ def enregistrer_transactions(
     nom_source,
     fichier_importe=None,
     type_operation=None,
+    utilisateur=None,
 ):
     """
     Enregistre les transactions préparées dans PostgreSQL.
@@ -358,7 +361,7 @@ def enregistrer_transactions(
             erreurs.append(f"Ligne {index} ({reference}): date invalide.")
             continue
 
-        if transaction_deja_presente(source, reference, date_tx, montant):
+        if transaction_deja_presente(source, reference, date_tx, montant, utilisateur):
             ignorees += 1
             continue
 
@@ -419,6 +422,7 @@ def importer_depuis_chemin(
     nom_source,
     fichier_importe=None,
     type_operation=None,
+    utilisateur=None,
 ):
     """
     Enchaîne lecture, mapping, normalisation et enregistrement.
@@ -445,6 +449,7 @@ def importer_depuis_chemin(
         nom_source,
         fichier_importe=fichier_importe,
         type_operation=type_operation,
+        utilisateur=utilisateur,
     )
     return {
         "ok": True,
